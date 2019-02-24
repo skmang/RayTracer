@@ -12,6 +12,8 @@ class Material
 {
 public :
 	Material():DiffuseColor(Vector3(0,0,0)){}
-	Material(const Vector3& color) :DiffuseColor(color){}
+	Material(const Vector3& color,const Vector3& albedo,const float& spec) :DiffuseColor(color),Albedo(albedo),SpecularExp(spec){}
 	Vector3 DiffuseColor;
+	Vector3 Albedo;
+	float SpecularExp;
 };

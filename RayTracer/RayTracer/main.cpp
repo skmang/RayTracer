@@ -9,6 +9,12 @@
 #include "light.h"
 const float PI = 3.14159265358979323846f;
 
+//反射的向量计算
+Vector3 Reflect(const Vector3& in,const Vector3& normal)
+{
+	return in - 2 * (in.dot(normal))*normal;
+}
+
 //找到最近相交的一个点，储存相关信息
 bool SceneInteract(const Vector3& origin, const Vector3& dir, std::vector<Sphere>& spheres, RayHitInfo& hitInfo, Material& material)
 {
@@ -38,12 +44,15 @@ Vector3 CastRay(const Vector3& origin, const Vector3& dir,std::vector<Sphere>& s
 	}
 	//有交点 根据材质 光源计算颜色
 	float diffuseLightIntensity = 0;
+	float specularLightIntensity = 0;
 	for(size_t i=0;i<lights.size();++i)
 	{
 		Vector3 lightDir = (lights[i].Position - hit_info.HitPosition).normalize();
+		specularLightIntensity += powf(std::max(0.f, Reflect(lightDir, hit_info.HitNormal).dot(dir)), material.SpecularExp)*lights[i].Intensity;
+
 		diffuseLightIntensity += lights[i].Intensity * std::max(0.f, lightDir.dot(hit_info.HitNormal));
 	}
-	return material.DiffuseColor * diffuseLightIntensity;
+	return material.DiffuseColor * diffuseLightIntensity*material.Albedo.x+Vector3(1.f,1.f,1.f)*specularLightIntensity*material.Albedo.y;
 }
 
 void Render()
@@ -58,14 +67,23 @@ void Render()
 	float fov = 75.f * PI / 180.f;
 	//像素在相机空间的位置
 	Vector3 pixelInWorldPos(0,0,0);
+	//材质
+	Material ivory(Vector3(0.4, 0.4, 0.3), Vector3(0.6, 0.3,0.0), 50.f);
+	Material rubber(Vector3(0.3, 0.1, 0.1), Vector3(0.9, 0.1, 0.0), 10.f);
+	Material unknown(Vector3(0.5, 0.8, 0.1), Vector3(0.2, 0.4, 0.0), 30.f);
 	//场景中的球体
 	std::vector<Sphere> spheres {
-		Sphere(Vector3(1,1,-2),.5f,Material(Vector3(.8f,.2f,.3f))),
-		Sphere(Vector3(0,0,-2),.5f,Material(Vector3(.2f,.8f,.3f))),
+		Sphere(Vector3(1,1,-1),.5f,ivory),
+		Sphere(Vector3(0,0,-2),.5f,rubber),
+		Sphere(Vector3(-0.5,0.4,-3),.8f,unknown),
+		Sphere(Vector3(0.3,0.8,-2.4),.7f,unknown),
 	};
 	//场景中的光源
 	std::vector<Light> lights {
-		Light(Vector3(0,0,0),0.5f)
+		Light(Vector3(0,0,0),1.5f),
+		Light(Vector3(-20, 20,  20), 1.5),
+		Light(Vector3(30, 50, -25), 1.8),
+		Light(Vector3(30, 20,  30), 1.7)
 	};
 	
 	std::vector<Vector3> frameBuffer(width*height);
@@ -78,7 +96,13 @@ void Render()
 			pixelInWorldPos.x = (2 * (i + 0.5) / (float)width - 1) * tan(fov / 2) * aspectRatio;;
 			pixelInWorldPos.y = (1 - 2 * (j + 0.5) / (float)height) * tan(fov / 2);
 			pixelInWorldPos.z = -1.f;
-			frameBuffer[i + j * width] = CastRay(origin,(pixelInWorldPos - origin).normalize(), spheres,lights);
+			Vector3 c = CastRay(origin, (pixelInWorldPos - origin).normalize(), spheres, lights);
+			float max = std::max(c[0], std::max(c[1], c[2]));
+			if (max > 1.f)
+			{
+				c = c * (1.f / max);
+			}
+			frameBuffer[i + j * width] = c;
 			//进度显示
 			if(( (i + j * width) / (float)total - progressNow ) > 0.02)
 			{
