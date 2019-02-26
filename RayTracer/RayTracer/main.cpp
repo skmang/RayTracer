@@ -7,6 +7,7 @@
 #include "geometry,h.h"
 #include "vector3.h"
 #include "light.h"
+#include <string>
 const float PI = 3.14159265358979323846f;
 
 //反射的向量计算
@@ -48,6 +49,21 @@ Vector3 CastRay(const Vector3& origin, const Vector3& dir,std::vector<Sphere>& s
 	for(size_t i=0;i<lights.size();++i)
 	{
 		Vector3 lightDir = (lights[i].Position - hit_info.HitPosition).normalize();
+		float tnear(9999999.0f);
+		bool hasShadow(false);
+		//如果从交点到光源有其他物体，说明有阴影，跳过这个灯的光照
+		for(size_t j=0;j<spheres.size();j++)
+		{
+			if(spheres[j].RayIntersect(hit_info.HitPosition,(lights[i].Position - hit_info.HitPosition).normalize(), tnear))
+			{
+				hasShadow = true;
+				break;
+			}
+		}
+		if(hasShadow)
+		{
+			continue;
+		}
 		specularLightIntensity += powf(std::max(0.f, Reflect(lightDir, hit_info.HitNormal).dot(dir)), material.SpecularExp)*lights[i].Intensity;
 
 		diffuseLightIntensity += lights[i].Intensity * std::max(0.f, lightDir.dot(hit_info.HitNormal));
@@ -56,7 +72,7 @@ Vector3 CastRay(const Vector3& origin, const Vector3& dir,std::vector<Sphere>& s
 }
 
 void Render()
-{
+{ 
 	//图片长宽
 	const int width = 1024;
 	const int height = 768;
@@ -73,14 +89,14 @@ void Render()
 	Material unknown(Vector3(0.5, 0.8, 0.1), Vector3(0.2, 0.4, 0.0), 30.f);
 	//场景中的球体
 	std::vector<Sphere> spheres {
-		Sphere(Vector3(1,1,-1),.5f,ivory),
+		Sphere(Vector3(0.8,0.8,-1.3),.2f,ivory),
 		Sphere(Vector3(0,0,-2),.5f,rubber),
 		Sphere(Vector3(-0.5,0.4,-3),.8f,unknown),
-		Sphere(Vector3(0.3,0.8,-2.4),.7f,unknown),
+		Sphere(Vector3(0.3,0.8,-2.4),.7f,ivory),
 	};
 	//场景中的光源
 	std::vector<Light> lights {
-		Light(Vector3(0,0,0),1.5f),
+		Light(Vector3(0,0,0),1.0f),
 		Light(Vector3(-20, 20,  20), 1.5),
 		Light(Vector3(30, 50, -25), 1.8),
 		Light(Vector3(30, 20,  30), 1.7)
@@ -97,6 +113,7 @@ void Render()
 			pixelInWorldPos.y = (1 - 2 * (j + 0.5) / (float)height) * tan(fov / 2);
 			pixelInWorldPos.z = -1.f;
 			Vector3 c = CastRay(origin, (pixelInWorldPos - origin).normalize(), spheres, lights);
+			//如果有分量大于1 按比例缩放 如（0.5,0.5,2） -> (0.25,0.25,1)
 			float max = std::max(c[0], std::max(c[1], c[2]));
 			if (max > 1.f)
 			{
@@ -112,8 +129,10 @@ void Render()
 		}
 	}
 	//写入到PPM文件
-	std::cout << "Write to file....";
-	std::ofstream ofs("./out.ppm",std::ios::binary);
+	std::cout << "Write to file....\n";
+	std::string fileName;
+	std::getline(std::cin, fileName);
+	std::ofstream ofs("./"+ fileName+".ppm",std::ios::binary);
 	ofs << "P6\n" << width << " " << height << "\n255\n";
 	for(size_t i=0;i<width*height;i++)
 	{
