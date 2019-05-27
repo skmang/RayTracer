@@ -145,6 +145,7 @@ void Render()
 	std::getline(std::cin, fileName);
 	std::ofstream ofs("./"+ fileName+".ppm",std::ios::binary);
 	ofs << "P6\n" << width << " " << height << "\n255\n";
+    //×ª»»Îªchar´æ´¢ÖÁppm
 	for(size_t i=0;i<width*height;i++)
 	{
 		for(size_t j=0;j<3;j++)
