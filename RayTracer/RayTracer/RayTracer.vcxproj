@@ -115,14 +115,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="light.cpp" />
+    <ClCompile Include="HitableList.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="vector3.cpp" />
+    <ClCompile Include="ray.cpp" />
+    <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="geometry,h.h" />
-    <ClInclude Include="light.h" />
-    <ClInclude Include="vector3.h" />
+    <ClInclude Include="Hitable.h" />
+    <ClInclude Include="HitableList.h" />
+    <ClInclude Include="ray.h" />
+    <ClInclude Include="Sphere.h" />
+    <ClInclude Include="vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

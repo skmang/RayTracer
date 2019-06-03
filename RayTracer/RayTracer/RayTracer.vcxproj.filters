@@ -18,21 +18,33 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="vector3.cpp">
+    <ClCompile Include="vec3.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="light.cpp">
+    <ClCompile Include="ray.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HitableList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="geometry,h.h">
+    <ClInclude Include="vec3.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="vector3.h">
+    <ClInclude Include="ray.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="light.h">
+    <ClInclude Include="Hitable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HitableList.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
