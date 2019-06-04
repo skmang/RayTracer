@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="HitableList.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ray.cpp" />
@@ -122,10 +123,13 @@
     <ClCompile Include="vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="HitableList.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="Utility.h" />
     <ClInclude Include="vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

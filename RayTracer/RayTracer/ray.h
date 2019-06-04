@@ -9,9 +9,9 @@ public:
 		_dir = d;
 	}
 
-	Vec3 origin() const { return _origin; }
-	Vec3 direction() const { return _dir; }
-	Vec3 point_at_t(float t) const { return _origin + _dir * t; }
+	Vec3 GetOrigin() const { return _origin; }
+	Vec3 GetDirection() const { return _dir; }
+	Vec3 GetPointAtParam(float t) const { return _origin + _dir * t; }
 private:
 	Vec3 _origin;
 	Vec3 _dir;
