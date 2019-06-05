@@ -3,25 +3,34 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <algorithm>
 #include <chrono>
 #include <string>
-#include <random>
 #include <iomanip>
 #include "vec3.h"
-#include "Ray.h"
+#include "ray.h"
 #include "Hitable.h"
 #include "HitableList.h"
 #include "Sphere.h"
 #include "Camera.h"
 #include "Utility.h"
+#include "Material.h"
+
 const float PI = 3.14159265358979323846f;
 const int MAX_RECURSIVE_COUNT = 2;
 
-Vec3 GetColor(const Ray& r, Hitable* world) {
+Vec3 GetColor(const Ray& r, Hitable* world,int depth) {
 	HitInfo rec;
 	if (world->Hit(r, 0.00001, std::numeric_limits<float>::max(), rec)) {
-		return 0.5*GetColor(Ray(r.GetOrigin(),rec.Normal + GetPointInUnitSphere()),world);
+		Ray scatter;
+		Vec3 attenuation;
+		if(depth < 50 && rec.Material->Scatter(r,rec,attenuation,scatter))
+		{
+			return attenuation * GetColor(scatter, world, depth + 1);
+		}
+		else
+		{
+			return Vec3(0, 0, 0);
+		}
 	}
 	else {
 		Vec3 unit_vec = unit_vector(r.GetDirection());
@@ -37,21 +46,25 @@ void ShowProgress(float current , float total) {
 int main()
 {
 	std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(3);
-	auto time = std::chrono::system_clock::now();
 	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
-	int ns = 30;
-	int nx = 800;
-	int ny = 400;
-	os << "P3\n" << nx << " " << " " << ny << "\n255\n";
-	Vec3 lower_left(-2.0, -1.0, -1.0);
-	Vec3 horizontal(4.0, 0, 0);
-	Vec3 vertical(0, 2.0, 0);
-	Vec3 origin(0, 0, 0);
-	Hitable* list[2];
-	list[0] = new Sphere(Vec3(0, 0, -1), 0.5f);
-	list[1] = new Sphere(Vec3(0, -100.5f, -1), 100.0f);
-	Hitable* world = new HitableList(list, 2);
+
+	// Image Settings
+	int ns = 100;
+	int nx = 200;
+	int ny = 100;
+
+	// Scene
+	Hitable* list[4];
+	list[0] = new Sphere(Vec3(0, 0, -1), 0.5f,new Lambert(Vec3(0.8,0.3,0.3)));
+	list[1] = new Sphere(Vec3(0, -100.5f, -1), 100.0f, new Lambert(Vec3(0.8, 0.3, 0.0)));
+	list[2] = new Sphere(Vec3(1, 0, -1), 0.5f, new Metal(Vec3(0.8, 0.6, 0.2)));
+	list[3] = new Sphere(Vec3(-1, 0, -1),0.5f, new Metal(Vec3(0.8, 0.8, 0.8)));
+	Hitable* world = new HitableList(list, 4);
+
+	// Cam
 	Camera cam;
+
+	os << "P3\n" << nx << " " << " " << ny << "\n255\n";
 	for (int y = ny - 1; y >= 0; y--)
 	{
 		for (int x = 0; x < nx; x++)
@@ -64,7 +77,7 @@ int main()
 				float v = float(y + GetCanonical()) / float(ny);
 				Ray r = cam.GetRay(u, v);
 				Vec3 p = r.GetPointAtParam(2.0);
-				color += GetColor(r, world);
+				color += GetColor(r, world,0);
 			}
 			color /= float(ns);
 			int ir = int(255.99 * sqrt(color[0]));
@@ -74,5 +87,6 @@ int main()
 			ShowProgress((float)(x + (ny - y) * nx),(float)(nx*ny));
 		}
 	}
+	//std::getchar();
 	return 0;
 }

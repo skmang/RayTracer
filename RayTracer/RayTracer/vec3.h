@@ -1,6 +1,4 @@
 #pragma once
-#include <math.h>
-#include <stdlib.h>
 #include <iostream>
 class Vec3
 {
@@ -149,7 +147,7 @@ inline Vec3 & Vec3::operator/=(const float k)
 
 inline void Vec3::make_unit_vector()
 {
-	float k = 1.0 / length();
+	float k = 1.0 / sqrt(e[0]*e[0]+ e[1] * e[1]+ e[2] * e[2]);
 	e[0] *= k;
 	e[1] *= k;
 	e[2] *= k;
@@ -157,5 +155,5 @@ inline void Vec3::make_unit_vector()
 
 inline Vec3 Reflect(const Vec3& in,const Vec3& normal)
 {
-	return in - 2.0f*dot(in, normal)*normal;
+	return in - 2*dot(in, normal)*normal;
 }
