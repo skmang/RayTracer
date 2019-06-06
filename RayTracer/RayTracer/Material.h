@@ -27,17 +27,22 @@ public:
 class Metal :public Material
 {
 public:
-	Metal(const Vec3& v) :Albedo(v) {}
+	Metal(const Vec3& v,float f) :Albedo(v)
+	{
+		// 最大值为1
+		Fuzz = std::min(1.0f, f);
+	}
 	bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const
 	{
 		Vec3 reflected = reflect(unit_vector(rayIn.GetDirection()), hitInfo.Normal);
-		scattered = Ray(hitInfo.Point,reflected); // 反射
+		scattered = Ray(hitInfo.Point,reflected+Fuzz*GetPointInUnitSphere()); // 反射
 		attenuation = Albedo;
 		float v = dot(scattered.GetDirection(), hitInfo.Normal);
 		//std::cout << "与金属球体相交 -> Dir: " << scattered.GetDirection() <<"Normal: "<< hitInfo.Normal << " Dot:" << v << std::endl;
 		return v > 0; // 即反射方向与法线夹角小于90度
 	}
 	Vec3 Albedo;
+	float Fuzz;
 private:
 	Vec3 reflect(const Vec3& v,const Vec3& n) const
 	{

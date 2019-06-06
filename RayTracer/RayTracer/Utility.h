@@ -2,8 +2,6 @@
 #include <random>
 #include <iostream>
 #include "vec3.h"
-
-
 inline int GetRandomNumber(int min, int max) {
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -20,5 +18,15 @@ inline Vec3 GetPointInUnitSphere() {
 	do {
 		v = 2.0*(Vec3(GetCanonical(), GetCanonical(), GetCanonical()) - Vec3(1, 1, 1));
 	} while (v.square_length() >= 1.0f);
+	return v;
+}
+
+inline Vec3 GetPointInUnitCircle()
+{
+	Vec3 v;
+	do
+	{
+		v = 2.0*(Vec3(GetCanonical(), GetCanonical(), 0)) - Vec3(1, 1, 0);
+	} while (dot(v,v) >= 1.0f);
 	return v;
 }

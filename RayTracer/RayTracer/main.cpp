@@ -14,10 +14,7 @@
 #include "Camera.h"
 #include "Utility.h"
 #include "Material.h"
-
-const float PI = 3.14159265358979323846f;
-const int MAX_RECURSIVE_COUNT = 2;
-
+#include "ConstDef.h"
 Vec3 GetColor(const Ray& r, Hitable* world,int depth) {
 	HitInfo rec;
 	if (world->Hit(r, 0.00001, std::numeric_limits<float>::max(), rec)) {
@@ -49,7 +46,7 @@ int main()
 	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
 
 	// Image Settings
-	int ns = 100;
+	int ns = 1;
 	int nx = 200;
 	int ny = 100;
 
@@ -57,12 +54,18 @@ int main()
 	Hitable* list[4];
 	list[0] = new Sphere(Vec3(0, 0, -1), 0.5f,new Lambert(Vec3(0.8,0.3,0.3)));
 	list[1] = new Sphere(Vec3(0, -100.5f, -1), 100.0f, new Lambert(Vec3(0.8, 0.3, 0.0)));
-	list[2] = new Sphere(Vec3(1, 0, -1), 0.5f, new Metal(Vec3(0.8, 0.6, 0.2)));
-	list[3] = new Sphere(Vec3(-1, 0, -1),0.5f, new Metal(Vec3(0.8, 0.8, 0.8)));
+	list[2] = new Sphere(Vec3(1, 0, -1), 0.5f, new Metal(Vec3(0.8, 0.6, 0.2),0.5));
+	list[3] = new Sphere(Vec3(-1, 0, -1),0.5f, new Metal(Vec3(0.8, 0.8, 0.8),0.9));
 	Hitable* world = new HitableList(list, 4);
 
 	// Cam
-	Camera cam;
+	Vec3 lookFrom = Vec3(3, 3, 2);
+	Vec3 lookAt = Vec3(0, 0, -1);
+	float focusDist = (lookFrom - lookAt).length();
+	float aperture =2.0f;
+	float fov = 20;
+	float aspectRatio = float(nx / ny);
+	Camera cam(fov, aspectRatio,Vec3(0,1,0), lookFrom, lookAt,aperture,focusDist);
 
 	os << "P3\n" << nx << " " << " " << ny << "\n255\n";
 	for (int y = ny - 1; y >= 0; y--)
