@@ -115,14 +115,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="HitableList.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ray.cpp" />
-    <ClCompile Include="Sphere.cpp" />
-    <ClCompile Include="vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ConstDef.h" />
     <ClInclude Include="Hitable.h" />

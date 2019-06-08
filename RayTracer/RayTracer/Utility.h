@@ -1,6 +1,5 @@
 #pragma once
 #include <random>
-#include <iostream>
 #include "vec3.h"
 inline int GetRandomNumber(int min, int max) {
 	std::random_device dev;
