@@ -6,7 +6,7 @@
 class Camera
 {
 public:
-	Camera(float vfov,float aspectRatio,Vec3 vup,Vec3 lookFrom,Vec3 lookAt,float aperture,float focusDist) {
+	Camera(float vfov,float aspectRatio,Vec3 vup,Vec3 lookFrom,Vec3 lookAt,float aperture,float focusDist,float time0,float time1) {
 		LenRadius = aperture / 2.0;
 		VerticalFOV = vfov;
 		AspectRatio = aspectRatio;
@@ -16,7 +16,8 @@ public:
 		W = unit_vector(lookFrom - lookAt);
 		U = unit_vector(cross(vup,W));
 		V = cross(W, U);
-
+		OpenTime = time0;
+		CloseTime = time1;
 		LeftBottom = Origin - W*focusDist - U * HalfWidth - V * HalfHeight;
 		Horizontal = 2 * HalfWidth*U;
 		Vertical = 2 * HalfHeight*V;
@@ -25,7 +26,8 @@ public:
 	Ray GetRay(float s, float t) {
 		Vec3 rd = LenRadius * GetPointInUnitCircle();
 		Vec3 offset = U*rd.x() + V*rd.y();
-		return Ray(Origin+offset, LeftBottom + s*Horizontal + t* Vertical- Origin-offset);
+		float time = OpenTime + GetCanonical()*(CloseTime - OpenTime);
+		return Ray(Origin+offset, LeftBottom + s*Horizontal + t* Vertical- Origin-offset,time);
 	}
 
 	Vec3 Origin;
@@ -41,6 +43,11 @@ public:
 	Vec3 U;
 	Vec3 V;
 	Vec3 W;
+
+	// 快门开始时间（这个时间范围内才会生成光线）
+	float OpenTime;
+	// 快门结束时间
+	float CloseTime;
 
 };
 

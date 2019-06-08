@@ -16,7 +16,7 @@ public:
 	bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const
 	{
 		Vec3 target = hitInfo.Point + hitInfo.Normal + GetPointInUnitSphere();
-		scattered = Ray(hitInfo.Point, target - hitInfo.Point); // 随机方向的散射
+		scattered = Ray(hitInfo.Point, target - hitInfo.Point,rayIn.GetTime()); // 随机方向的散射
 		attenuation = Albedo;
 		return true;
 	}
@@ -35,7 +35,7 @@ public:
 	bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const
 	{
 		Vec3 reflected = reflect(unit_vector(rayIn.GetDirection()), hitInfo.Normal);
-		scattered = Ray(hitInfo.Point,reflected+Fuzz*GetPointInUnitSphere()); // 反射
+		scattered = Ray(hitInfo.Point,reflected+Fuzz*GetPointInUnitSphere(), rayIn.GetTime()); // 反射
 		attenuation = Albedo;
 		float v = dot(scattered.GetDirection(), hitInfo.Normal);
 		//std::cout << "与金属球体相交 -> Dir: " << scattered.GetDirection() <<"Normal: "<< hitInfo.Normal << " Dot:" << v << std::endl;

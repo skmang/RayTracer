@@ -33,3 +33,31 @@ bool Sphere::Hit(const Ray & ray, float tMin, float tMax, HitInfo & rec) const
 	}
 	return false;
 }
+
+bool MoveSphere::Hit(const Ray &ray, float tMin, float tMax, HitInfo & rec) const
+{
+	Vec3 oc = ray.GetOrigin() - GetMoveCenter(ray.GetTime());
+	float a = dot(ray.GetDirection(), ray.GetDirection());
+	float b = dot(oc, ray.GetDirection());
+	float c = dot(oc, oc) - Radius * Radius;
+	float discriminant = b * b - a * c;
+	rec.Material = Mat;
+	if (discriminant > 0) {
+		float temp = (-b - sqrt(b*b - a * c)) / a;
+		if (temp < tMax && temp > tMin) {
+			rec.t = temp;
+			rec.Point = ray.GetPointAtParam(rec.t);
+			rec.Normal = (rec.Point - GetMoveCenter(ray.GetTime())) / Radius;
+			return true;
+		}
+		temp = (-b + sqrt(b*b - a * c)) / a;
+		if (temp < tMax && temp > tMin) {
+			rec.t = temp;
+			rec.Point = ray.GetPointAtParam(rec.t);
+			rec.Normal = (rec.Point - GetMoveCenter(ray.GetTime())) / Radius;
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
