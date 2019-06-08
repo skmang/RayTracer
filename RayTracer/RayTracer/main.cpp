@@ -15,6 +15,7 @@
 #include "Utility.h"
 #include "Material.h"
 #include "ConstDef.h"
+#include "BVHNode.h"
 Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 	HitInfo rec;
 	if (world->Hit(r, 0.00001, std::numeric_limits<float>::max(), rec)) {
@@ -40,45 +41,101 @@ void ShowProgress(float current, float total) {
 	std::cout << current / total << "\r";
 }
 
-Hitable* RandomScene()
+//Hitable* RandomScene()
+//{
+//	int n = 500;
+//	Hitable** list = new Hitable*[n + 1];
+//	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(Vec3(0.3, 0.3, 0.3)));
+//	int i = 1;
+//	for (int a = -11; a < 11; a++)
+//	{
+//		for (int b = -11; b < 11; b++)
+//		{
+//			float chooseMat = GetCanonical();
+//			Vec3 center(a + 0.9*GetCanonical(), 0.2, b + 0.9*GetCanonical());
+//			if((center-Vec3(4,0.2,0)).length()>0.9)
+//			{
+//				if(chooseMat <0.7)
+//				{
+//					list[i++] = new MoveSphere(
+//						center,
+//						center + Vec3(0, GetCanonical()*0.5, 0),
+//						0.0,
+//						1.0,
+//						0.2,
+//						new Lambert(Vec3(GetCanonical(), GetCanonical(), GetCanonical()))
+//					);
+//				}else
+//				{
+//					list[i++] = new Sphere(center, 0.2, new Metal(
+//						Vec3(0.5f*(1.f+ GetCanonical())
+//							, 0.5f*(1.f + GetCanonical())
+//							, 0.5f*(1.f + GetCanonical())),
+//						0.5*GetCanonical()));
+//				}
+//			}
+//		}
+//	}
+//	list[i++] = new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7),0.3));
+//	list[i++] = new Sphere(Vec3(0,1,0), 1.0, new Lambert(Vec3(0.1,0.71,0.36)));
+//	list[i++] = new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87),0.2));
+//
+//	return new HitableList(list, i);
+//}
+Hitable* RandomSceneBVH()
 {
-	int n = 500;
-	Hitable** list = new Hitable*[n + 1];
-	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(Vec3(0.3, 0.3, 0.3)));
+	std::vector<Hitable*> hitableList;
+	hitableList.push_back(
+		new Sphere(Vec3(0, -1000, 0), 
+			1000, 
+			new Lambert(
+				new CheckerTexture(
+					new ConstantTexture(Vec3(0.2)),
+					new ConstantTexture(Vec3(0.9))
+				)
+			)
+		)
+	);
 	int i = 1;
-	for (int a = -11; a < 11; a++)
+	for (int a = -11; a < 11; a++) 
 	{
 		for (int b = -11; b < 11; b++)
 		{
 			float chooseMat = GetCanonical();
 			Vec3 center(a + 0.9*GetCanonical(), 0.2, b + 0.9*GetCanonical());
-			if((center-Vec3(4,0.2,0)).length()>0.9)
+			if ((center - Vec3(4, 0.2, 0)).length() > 0.9)
 			{
-				if(chooseMat <0.7)
+				if (chooseMat < 0.7)
 				{
-					list[i++] = new MoveSphere(
-						center,
-						center + Vec3(0, GetCanonical()*0.5, 0),
-						0.0,
-						1.0,
-						0.2,
-						new Lambert(Vec3(GetCanonical(), GetCanonical(), GetCanonical()))
+					hitableList.push_back(
+						new MoveSphere(
+							center,
+							center + Vec3(0, GetCanonical()*0.5, 0),
+							0.0,
+							1.0,
+							0.2,
+							new Lambert(new ConstantTexture(Vec3(GetCanonical(), GetCanonical(), GetCanonical())))
+						));
+				}
+				else
+				{
+					hitableList.push_back(
+						new Sphere(
+							center, 
+							0.2, 
+							new Metal(Vec3(0.5f*(1.f + GetCanonical()), 0.5f*(1.f + GetCanonical()), 0.5f*(1.f + GetCanonical())),
+					     	0.5*GetCanonical())
+						)
 					);
-				}else
-				{
-					list[i++] = new Sphere(center, 0.2, new Metal(
-						Vec3(0.5f*(1.f+ GetCanonical())
-							, 0.5f*(1.f + GetCanonical())
-							, 0.5f*(1.f + GetCanonical())),
-						0.5*GetCanonical()));
 				}
 			}
 		}
 	}
-	list[i++] = new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7),0.3));
-	list[i++] = new Sphere(Vec3(0,1,0), 1.0, new Lambert(Vec3(0.1,0.71,0.36)));
-	list[i++] = new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87),0.2));
-	return new HitableList(list, i);
+	hitableList.push_back(new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7), 0.3)));
+	hitableList.push_back(new Sphere(Vec3(0, 1, 0), 1.0, new Lambert(new ConstantTexture(Vec3(GetCanonical(), GetCanonical(), GetCanonical())))));
+	hitableList.push_back(new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87), 0.2)));
+
+	return new BVHNode(hitableList,0,1);
 }
 
 int main()
@@ -87,17 +144,15 @@ int main()
 	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
 
 	// Image Settings
-	int ns = 4;
-	int nx = 1366;
-	int ny = 768;
+	int ns = 1;
+	int nx = 400;
+	int ny = 200;
 
-	// Scene
-	Hitable* list[4];
-	list[0] = new Sphere(Vec3(0, 0, -1), 0.5f, new Lambert(Vec3(0.8, 0.3, 0.3)));
-	list[1] = new Sphere(Vec3(0, -100.5f, -1), 100.0f, new Lambert(Vec3(0.8, 0.3, 0.0)));
-	list[2] = new Sphere(Vec3(1, 0, -1), 0.5f, new Metal(Vec3(0.8, 0.6, 0.2), 0.5));
-	list[3] = new Sphere(Vec3(-1, 0, -1), 0.5f, new Metal(Vec3(0.8, 0.8, 0.8), 0.9));
-	Hitable* world = RandomScene();
+	std::clock_t start;
+	start = std::clock();
+	double duration;
+	Hitable* world = RandomSceneBVH();
+	
 	//Hitable* world = new HitableList(list, 4);
 	// Cam
 	Vec3 lookFrom = Vec3(13,2,3);
@@ -131,6 +186,9 @@ int main()
 			ShowProgress((float)(x + (ny - y) * nx), (float)(nx*ny));
 		}
 	}
-	//std::getchar();
+	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+	std::cout << "Time cost : " << duration << std::endl;
+	int i;
+	std::cin >> i;
 	return 0;
 }

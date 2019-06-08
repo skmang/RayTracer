@@ -19,6 +19,9 @@
     <Filter Include="头文件\Acceleration">
       <UniqueIdentifier>{c3499542-be2d-46f0-ada1-39fec1664704}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Texture">
+      <UniqueIdentifier>{13755c51-f77a-4bf1-8353-f2e296c22b7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -55,6 +58,12 @@
     </ClInclude>
     <ClInclude Include="AABB.h">
       <Filter>头文件\Acceleration</Filter>
+    </ClInclude>
+    <ClInclude Include="BVHNode.h">
+      <Filter>头文件\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>头文件\Texture</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

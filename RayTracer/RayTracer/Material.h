@@ -2,26 +2,28 @@
 #include "Utility.h"
 #include "ray.h"
 #include  "Hitable.h"
+#include "Texture.h"
 
 class Material
 {
 public:
+	
 	virtual bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const = 0;
 };
 
 class Lambert :public Material
 {
 public:
-	Lambert(const Vec3& v) :Albedo(v) {}
+	Lambert(Texture* v) :Albedo(v) {}
 	bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const
 	{
 		Vec3 target = hitInfo.Point + hitInfo.Normal + GetPointInUnitSphere();
 		scattered = Ray(hitInfo.Point, target - hitInfo.Point,rayIn.GetTime()); // 随机方向的散射
-		attenuation = Albedo;
+		attenuation = Albedo->GetColor(0,0,hitInfo.Point);
 		return true;
 	}
 
-	Vec3 Albedo;
+	Texture* Albedo;
 };
 
 class Metal :public Material
