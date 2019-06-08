@@ -31,7 +31,7 @@ public:
     Vec3 GetColor(float u, float v, const Vec3& point) const override
 	{
 		// f(x) = Sin(wx+p) 周期为 2PI/w, 周期的一半即为棋盘纹理单个格子的尺寸，p值可以偏移纹理
-		float sines = std::sin(31.416*point.x())*std::sin(31.416*point.y())*std::sin(31.416*point.z());
+		float sines = std::sin(6.283*point.x())*std::sin(6.283*point.y())*std::sin(6.283*point.z());
 		if(sines > 0)
 		{
 			return _texture1->GetColor(u, v, point);

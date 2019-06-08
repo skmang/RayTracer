@@ -81,7 +81,6 @@ BVHNode::BVHNode(vector<Hitable*> hitableList, float time0, float time1)
 		std::cerr << "Construct bvh error : No bounding box!" << std::endl;
 	}
 	BoundBox = SurroundingAABB(boxLeft, boxRight);
-	std::cout << "Construct BVH Node " << hitableList.size() << std::endl;
 }
 
 bool BVHNode::Hit(const Ray& r, float tMin, float tMax, HitInfo& rec) const

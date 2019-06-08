@@ -6,6 +6,7 @@
 #include <chrono>
 #include <string>
 #include <iomanip>
+#include <thread>
 #include "vec3.h"
 #include "ray.h"
 #include "Hitable.h"
@@ -16,6 +17,7 @@
 #include "Material.h"
 #include "ConstDef.h"
 #include "BVHNode.h"
+
 Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 	HitInfo rec;
 	if (world->Hit(r, 0.00001, std::numeric_limits<float>::max(), rec)) {
@@ -23,6 +25,7 @@ Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 		Vec3 attenuation;
 		if (depth < 50 && rec.Material->Scatter(r, rec, attenuation, scatter))
 		{
+			// 颜色衰减 R G B 分量(范围在0到1)，为初始化材质时传入的值，会收敛至0，即为黑色的阴影
 			return attenuation * GetColor(scatter, world, depth + 1);
 		}
 		else
@@ -37,8 +40,8 @@ Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 	}
 }
 
-void ShowProgress(float current, float total) {
-	std::cout << current / total << "\r";
+void ShowProgress(float current, float total,string info) {
+	std::cout<< info << " " << current / total << "\r";
 }
 
 //Hitable* RandomScene()
@@ -138,23 +141,76 @@ Hitable* RandomSceneBVH()
 	return new BVHNode(hitableList,0,1);
 }
 
+struct MultithreadInfo
+{
+	MultithreadInfo(int x,int y,int xCount,int yCount,int xTotal,int yTotal,int ns,Camera* cam,Hitable* world)
+	{
+		X = x;
+		Y = y;
+		XCount = xCount;
+		YCount = yCount;
+		Cam = cam;
+		World = world;
+		Sample = ns;
+		XTotal = xTotal;
+		YTotal = yTotal;
+	}
+	int X;
+	int Y;
+	int XCount;
+	int YCount;
+	Camera* Cam;
+	Hitable* World;
+	int Sample;
+	int XTotal;
+	int YTotal;
+};
+
+
+void TraceRay(std::vector<std::vector<Vec3>>* buffer,MultithreadInfo info,bool* flags,int* progress,int tid)
+{
+	int xCount = info.X + info.XCount;
+	for (int x = info.X;x< xCount;x++)
+	{
+		for (int y=info.Y;y<info.YCount;y++)
+		{
+			Vec3 color = Vec3(0, 0, 0);
+			for (int i = 0; i < info.Sample; i++)
+			{
+				// 水平方向上映射至 [-2,2] 垂直方向上映射至[-1,1],因此可以覆盖整个屏幕空间
+				float u = float(x + GetCanonical()) / float(info.XTotal);
+				float v = float(y + GetCanonical()) / float(info.YTotal);
+				Ray r = info.Cam->GetRay(u, v);
+				Vec3 p = r.GetPointAtParam(2.0);
+				color += GetColor(r, info.World, 0);
+			}
+			color /= float(info.Sample);
+			int ir = int(255.99 * sqrt(color[0]));
+			int ig = int(255.99 * sqrt(color[1]));
+			int ib = int(255.99 * sqrt(color[2]));
+			(*buffer)[x][y] = Vec3(ir, ig, ib);
+			progress[tid]++;
+		}
+	}
+	flags[tid] = true;
+	std::cout << "Thread " << tid << " Completed " << std::endl;
+}
+
 int main()
 {
 	std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(3);
-	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
 
 	// Image Settings
 	int ns = 1;
-	int nx = 400;
-	int ny = 200;
+	int nx = 1600;
+	int ny = 900;
 
+	// 记录时间
 	std::clock_t start;
 	start = std::clock();
-	double duration;
+
+	// 初始化场景与相机
 	Hitable* world = RandomSceneBVH();
-	
-	//Hitable* world = new HitableList(list, 4);
-	// Cam
 	Vec3 lookFrom = Vec3(13,2,3);
 	Vec3 lookAt = Vec3(0, 0, 0);
 	float focusDist = 10.0f;
@@ -163,30 +219,72 @@ int main()
 	float aspectRatio = float(nx / ny);
 	Camera cam(fov, aspectRatio, Vec3(0, 1, 0), lookFrom, lookAt, aperture, focusDist,0,1);
 
+	// --多线程信息(先按10的整数来，简单.....)
+	int xCount = nx / THREAD_COUNT;
+	std::vector<MultithreadInfo> info;
+	info.reserve(THREAD_COUNT);
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		info.emplace_back(i*xCount, 0, xCount, ny, nx, ny, ns,&cam,world);
+	}
+	std::vector<std::vector<Vec3>> colorBuffer(nx, std::vector<Vec3>(ny));
+	
+	// --开多线程写buffer
+	std::thread threads[THREAD_COUNT];
+	// 某个线程完成的标记
+	bool flags[THREAD_COUNT];
+	// 某个线程的进度
+	int progress[THREAD_COUNT];
+	int totalCount = nx * ny;
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		progress[i] = 0;
+		flags[i] = false;
+		threads[i] = std::thread(TraceRay,&colorBuffer,info[i],flags,progress,i);
+	}
+
+	// --不等待的话 可能有一小块渲染不完
+	while (true)
+	{
+		int currentCount = 0;
+		for (int i=0;i<THREAD_COUNT;i++)
+		{
+			currentCount += progress[i];
+		}
+		ShowProgress((float)currentCount, (float)totalCount, "进度: ");
+		bool canJoin = true;
+		for (int i=0;i< THREAD_COUNT;i++)
+		{
+			if(!flags[i])
+			{
+				canJoin = false;
+			}
+		}
+		if(canJoin)
+		{
+			break;
+		}
+	}
+
+	for (int i=0;i<THREAD_COUNT;i++)
+	{
+		threads[i].join();
+	}
+
+	// --写入到文件
+	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
 	os << "P3\n" << nx << " " << " " << ny << "\n255\n";
 	for (int y = ny - 1; y >= 0; y--)
 	{
 		for (int x = 0; x < nx; x++)
 		{
-			Vec3 color = Vec3(0, 0, 0);
-			for (int i = 0; i < ns; i++)
-			{
-				// 水平方向上映射至 [-2,2] 垂直方向上映射至[-1,1],因此可以覆盖整个屏幕空间
-				float u = float(x + GetCanonical()) / float(nx);
-				float v = float(y + GetCanonical()) / float(ny);
-				Ray r = cam.GetRay(u, v);
-				Vec3 p = r.GetPointAtParam(2.0);
-				color += GetColor(r, world, 0);
-			}
-			color /= float(ns);
-			int ir = int(255.99 * sqrt(color[0]));
-			int ig = int(255.99 * sqrt(color[1]));
-			int ib = int(255.99 * sqrt(color[2]));
-			os << ir << " " << ig << " " << ib << "\n";
-			ShowProgress((float)(x + (ny - y) * nx), (float)(nx*ny));
+			os << colorBuffer[x][y][0] << " " << colorBuffer[x][y][1] << " " << colorBuffer[x][y][2] << "\n";
+			ShowProgress(static_cast<float>(x + (ny - y) * nx), static_cast<float>(nx * ny),"写入PPM中...");
 		}
 	}
-	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+
+	// --输出时间
+	const double duration = (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC);
 	std::cout << "Time cost : " << duration << std::endl;
 	int i;
 	std::cin >> i;
