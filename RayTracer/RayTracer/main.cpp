@@ -134,11 +134,20 @@ Hitable* RandomSceneBVH()
 			}
 		}
 	}
-	hitableList.push_back(new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7), 0.3)));
+	hitableList.push_back(new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7), 0)));
 	hitableList.push_back(new Sphere(Vec3(0, 1, 0), 1.0, new Lambert(new ConstantTexture(Vec3(GetCanonical(), GetCanonical(), GetCanonical())))));
-	hitableList.push_back(new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87), 0.2)));
+	hitableList.push_back(new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87), 0)));
 
 	return new BVHNode(hitableList,0,1);
+}
+
+Hitable* TwoPerlinNoiseBalls()
+{
+	Texture *perlin = new NoiseTexture();
+	Hitable** list = new Hitable*[2];
+	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(perlin));
+	list[1] = new Sphere(Vec3(0, 2, 0), 2, new Lambert(perlin));
+	return new HitableList(list,2);
 }
 
 struct MultithreadInfo
@@ -202,15 +211,16 @@ int main()
 
 	// Image Settings
 	int ns = 1;
-	int nx = 1600;
-	int ny = 900;
+	int nx = 800;
+	int ny = 400;
 
 	// 记录时间
 	std::clock_t start;
 	start = std::clock();
 
 	// 初始化场景与相机
-	Hitable* world = RandomSceneBVH();
+	//Hitable* world = RandomSceneBVH();
+	Hitable* world = TwoPerlinNoiseBalls();
 	Vec3 lookFrom = Vec3(13,2,3);
 	Vec3 lookAt = Vec3(0, 0, 0);
 	float focusDist = 10.0f;
@@ -244,6 +254,7 @@ int main()
 	}
 
 	// --不等待的话 可能有一小块渲染不完
+	float lastProgress = 0;
 	while (true)
 	{
 		int currentCount = 0;
@@ -251,7 +262,12 @@ int main()
 		{
 			currentCount += progress[i];
 		}
-		ShowProgress((float)currentCount, (float)totalCount, "进度: ");
+		float progress = (float)currentCount / (float)totalCount;
+		if(progress - lastProgress > 0.02)
+		{
+			std::cout << "Current Progress " << progress << "\r";
+			lastProgress = progress;
+		}
 		bool canJoin = true;
 		for (int i=0;i< THREAD_COUNT;i++)
 		{

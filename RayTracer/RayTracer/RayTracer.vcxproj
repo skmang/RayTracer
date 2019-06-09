@@ -125,6 +125,7 @@
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="HitableList.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="Perlin.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="Texture.h" />

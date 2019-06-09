@@ -1,6 +1,6 @@
 #pragma once
 #include "vec3.h"
-
+#include "Perlin.h"
 class Texture
 {
 public:
@@ -43,4 +43,15 @@ public:
 private:
 	Texture* _texture1;
 	Texture* _texture2;
+};
+
+class NoiseTexture : public Texture
+{
+public:
+	NoiseTexture() = default;
+	virtual Vec3 GetColor(float u, float v, const Vec3& point) const override
+	{
+		return Vec3(1, 1, 1)*Noise.Noise(point);
+	}
+	Perlin Noise;
 };
