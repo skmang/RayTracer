@@ -49,9 +49,12 @@ class NoiseTexture : public Texture
 {
 public:
 	NoiseTexture() = default;
+	NoiseTexture(float s): Scale(s){}
 	virtual Vec3 GetColor(float u, float v, const Vec3& point) const override
 	{
-		return Vec3(1, 1, 1)*Noise.Noise(point);
+		return Vec3(1, 1, 1)*0.47*(0.7+Noise.Turb(point * Scale));
+		//return Vec3(1, 1, 1)*0.5*(1+cos(Scale*point.y()) + Noise.Turb(point * Scale));
 	}
 	Perlin Noise;
+	float Scale;
 };

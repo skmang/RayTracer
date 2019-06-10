@@ -40,8 +40,8 @@ Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 	}
 }
 
-void ShowProgress(float current, float total,string info) {
-	std::cout<< info << " " << current / total << "\r";
+void ShowProgress(float current, float total, string info) {
+	std::cout << info << " " << current / total << "\r";
 }
 
 //Hitable* RandomScene()
@@ -89,8 +89,8 @@ Hitable* RandomSceneBVH()
 {
 	std::vector<Hitable*> hitableList;
 	hitableList.push_back(
-		new Sphere(Vec3(0, -1000, 0), 
-			1000, 
+		new Sphere(Vec3(0, -1000, 0),
+			1000,
 			new Lambert(
 				new CheckerTexture(
 					new ConstantTexture(Vec3(0.2)),
@@ -100,7 +100,7 @@ Hitable* RandomSceneBVH()
 		)
 	);
 	int i = 1;
-	for (int a = -11; a < 11; a++) 
+	for (int a = -11; a < 11; a++)
 	{
 		for (int b = -11; b < 11; b++)
 		{
@@ -124,10 +124,10 @@ Hitable* RandomSceneBVH()
 				{
 					hitableList.push_back(
 						new Sphere(
-							center, 
-							0.2, 
+							center,
+							0.2,
 							new Metal(Vec3(0.5f*(1.f + GetCanonical()), 0.5f*(1.f + GetCanonical()), 0.5f*(1.f + GetCanonical())),
-					     	0.5*GetCanonical())
+								0.5*GetCanonical())
 						)
 					);
 				}
@@ -138,21 +138,21 @@ Hitable* RandomSceneBVH()
 	hitableList.push_back(new Sphere(Vec3(0, 1, 0), 1.0, new Lambert(new ConstantTexture(Vec3(GetCanonical(), GetCanonical(), GetCanonical())))));
 	hitableList.push_back(new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87), 0)));
 
-	return new BVHNode(hitableList,0,1);
+	return new BVHNode(hitableList, 0, 1);
 }
 
 Hitable* TwoPerlinNoiseBalls()
 {
-	Texture *perlin = new NoiseTexture();
+	Texture *perlin = new NoiseTexture(30);
 	Hitable** list = new Hitable*[2];
 	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(perlin));
 	list[1] = new Sphere(Vec3(0, 2, 0), 2, new Lambert(perlin));
-	return new HitableList(list,2);
+	return new HitableList(list, 2);
 }
 
 struct MultithreadInfo
 {
-	MultithreadInfo(int x,int y,int xCount,int yCount,int xTotal,int yTotal,int ns,Camera* cam,Hitable* world)
+	MultithreadInfo(int x, int y, int xCount, int yCount, int xTotal, int yTotal, int ns, Camera* cam, Hitable* world)
 	{
 		X = x;
 		Y = y;
@@ -176,12 +176,12 @@ struct MultithreadInfo
 };
 
 
-void TraceRay(std::vector<std::vector<Vec3>>* buffer,MultithreadInfo info,bool* flags,int* progress,int tid)
+void TraceRay(std::vector<std::vector<Vec3>>* buffer, MultithreadInfo info, bool* flags, int* progress, int tid)
 {
 	int xCount = info.X + info.XCount;
-	for (int x = info.X;x< xCount;x++)
+	for (int x = info.X; x < xCount; x++)
 	{
-		for (int y=info.Y;y<info.YCount;y++)
+		for (int y = info.Y; y < info.YCount; y++)
 		{
 			Vec3 color = Vec3(0, 0, 0);
 			for (int i = 0; i < info.Sample; i++)
@@ -210,9 +210,9 @@ int main()
 	std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(3);
 
 	// Image Settings
-	int ns = 1;
-	int nx = 800;
-	int ny = 400;
+	int ns = 20;
+	int nx = 600;
+	int ny = 300;
 
 	// 记录时间
 	std::clock_t start;
@@ -221,13 +221,13 @@ int main()
 	// 初始化场景与相机
 	//Hitable* world = RandomSceneBVH();
 	Hitable* world = TwoPerlinNoiseBalls();
-	Vec3 lookFrom = Vec3(13,2,3);
+	Vec3 lookFrom = Vec3(13, 2, 3);
 	Vec3 lookAt = Vec3(0, 0, 0);
 	float focusDist = 10.0f;
 	float aperture = 0.0f;
 	float fov = 20;
 	float aspectRatio = float(nx / ny);
-	Camera cam(fov, aspectRatio, Vec3(0, 1, 0), lookFrom, lookAt, aperture, focusDist,0,1);
+	Camera cam(fov, aspectRatio, Vec3(0, 1, 0), lookFrom, lookAt, aperture, focusDist, 0, 1);
 
 	// --多线程信息(先按10的整数来，简单.....)
 	int xCount = nx / THREAD_COUNT;
@@ -235,10 +235,10 @@ int main()
 	info.reserve(THREAD_COUNT);
 	for (int i = 0; i < THREAD_COUNT; i++)
 	{
-		info.emplace_back(i*xCount, 0, xCount, ny, nx, ny, ns,&cam,world);
+		info.emplace_back(i*xCount, 0, xCount, ny, nx, ny, ns, &cam, world);
 	}
 	std::vector<std::vector<Vec3>> colorBuffer(nx, std::vector<Vec3>(ny));
-	
+
 	// --开多线程写buffer
 	std::thread threads[THREAD_COUNT];
 	// 某个线程完成的标记
@@ -250,7 +250,7 @@ int main()
 	{
 		progress[i] = 0;
 		flags[i] = false;
-		threads[i] = std::thread(TraceRay,&colorBuffer,info[i],flags,progress,i);
+		threads[i] = std::thread(TraceRay, &colorBuffer, info[i], flags, progress, i);
 	}
 
 	// --不等待的话 可能有一小块渲染不完
@@ -258,31 +258,31 @@ int main()
 	while (true)
 	{
 		int currentCount = 0;
-		for (int i=0;i<THREAD_COUNT;i++)
+		for (int i = 0; i < THREAD_COUNT; i++)
 		{
 			currentCount += progress[i];
 		}
 		float progress = (float)currentCount / (float)totalCount;
-		if(progress - lastProgress > 0.02)
+		if (progress - lastProgress > 0.02)
 		{
 			std::cout << "Current Progress " << progress << "\r";
 			lastProgress = progress;
 		}
 		bool canJoin = true;
-		for (int i=0;i< THREAD_COUNT;i++)
+		for (int i = 0; i < THREAD_COUNT; i++)
 		{
-			if(!flags[i])
+			if (!flags[i])
 			{
 				canJoin = false;
 			}
 		}
-		if(canJoin)
+		if (canJoin)
 		{
 			break;
 		}
 	}
 
-	for (int i=0;i<THREAD_COUNT;i++)
+	for (int i = 0; i < THREAD_COUNT; i++)
 	{
 		threads[i].join();
 	}
@@ -295,7 +295,7 @@ int main()
 		for (int x = 0; x < nx; x++)
 		{
 			os << colorBuffer[x][y][0] << " " << colorBuffer[x][y][1] << " " << colorBuffer[x][y][2] << "\n";
-			ShowProgress(static_cast<float>(x + (ny - y) * nx), static_cast<float>(nx * ny),"写入PPM中...");
+			ShowProgress(static_cast<float>(x + (ny - y) * nx), static_cast<float>(nx * ny), "写入PPM中...");
 		}
 	}
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Utility.h"
+// 柏林噪声这一块的算法不是很懂.....
 class Perlin
 {
 public:
@@ -8,17 +9,66 @@ public:
 		float u = p.x() - floor(p.x());
 		float v = p.y() - floor(p.y());
 		float w = p.z() - floor(p.z());
-		int i = int(4 * p.x()) & 255; // 255 = 1111 1111 ,小于255的数会保持不变
-		int j = int(4 * p.y()) & 255;
-		int k = int(4 * p.z()) & 255;
+		u = u * u*(3 - 2 * u);
+		v = v * v*(3 - 2 * v);
+		w = w * w*(3 - 2 * w);
+		int i = floor(p.x()); // 255 = 1111 1111 ,小于255的数会保持不变
+		int j = floor(p.y());
+		int k = floor(p.z());
+
+		Vec3 c[2][2][2];
+		for(int x=0;x<2;x++)
+		{
+			for(int y=0;y<2;y++)
+			{
+				for(int z=0;z<2;z++)
+				{
+					c[x][y][z] = RanVec3[PermuteX[(i + x) & 255] ^ PermuteX[(j + y) & 255] ^ PermuteX[(k + z) & 255]];
+				}
+			}
+		}
 		// 按位异或 相异的为1
-		return RanFloat[PermuteX[i]^PermuteY[j]^PermuteZ[k]];
+		return TrilinearInterpolate(c,u,v,w);
 	}
 
+	float Turb(const Vec3& p, int depth = 10) const
+	{
+		float accum = 0;
+		Vec3 temp_p = p;
+		float weight = 1.f;
+		for (int i=0;i<depth;i++)
+		{
+			accum += weight * Noise(temp_p);
+			weight *= 0.5;
+			temp_p *= 2;
+		}
+		return fabs(accum);
+	}
 	static float *RanFloat;
 	static int* PermuteX;
 	static int* PermuteY;
 	static int* PermuteZ;
+	static Vec3 *RanVec3;
+private:
+	float TrilinearInterpolate(Vec3 c[2][2][2],float u,float v,float w) const
+	{
+		float uu = u * u*(3 - 2 * u);
+		float vv = v * v*(3 - 2 * v);
+		float ww = w * w*(3 - 2 * w);
+		float accum = 0;
+		for (int i=0;i<2;i++)
+		{
+			for (int j=0;j<2;j++)
+			{
+				for(int k=0;k<2;k++)
+				{
+					Vec3 weigt(u - i, v - j, w - k);
+					accum += (i*uu + (1 - i)*(1 - uu))*(j*vv + (1 - j)*(1 - vv))*(k*ww + (1 - k)*(1 - ww))*dot(c[i][j][k],weigt);
+				}
+			}
+		}
+		return accum;
+	}
 };
 
 static float* PerlinGenerate()
@@ -27,6 +77,16 @@ static float* PerlinGenerate()
 	for(int i=0;i<256;i++)
 	{
 		p[i] = GetCanonical();
+	}
+	return p;
+}
+
+static Vec3* PerlinVecGenerate()
+{
+	Vec3* p = new Vec3[256];
+	for (int i=0;i<256;i++)
+	{
+		p[i] = unit_vector(Vec3(2 * GetCanonical() - 1, 2 * GetCanonical() - 1, 2 * GetCanonical() - 1));
 	}
 	return p;
 }
@@ -55,6 +115,7 @@ static int * PerlinGeneratePermute()
 }
 
 float* Perlin::RanFloat = PerlinGenerate();
+Vec3* Perlin::RanVec3 = PerlinVecGenerate();
 int * Perlin::PermuteX = PerlinGeneratePermute();
 int * Perlin::PermuteY = PerlinGeneratePermute();
 int * Perlin::PermuteZ = PerlinGeneratePermute();
