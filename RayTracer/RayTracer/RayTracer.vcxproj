@@ -128,6 +128,7 @@
     <ClInclude Include="Perlin.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="vec3.h" />

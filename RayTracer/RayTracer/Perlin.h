@@ -9,10 +9,7 @@ public:
 		float u = p.x() - floor(p.x());
 		float v = p.y() - floor(p.y());
 		float w = p.z() - floor(p.z());
-		u = u * u*(3 - 2 * u);
-		v = v * v*(3 - 2 * v);
-		w = w * w*(3 - 2 * w);
-		int i = floor(p.x()); // 255 = 1111 1111 ,小于255的数会保持不变
+		int i = floor(p.x());
 		int j = floor(p.y());
 		int k = floor(p.z());
 
@@ -31,7 +28,7 @@ public:
 		return TrilinearInterpolate(c,u,v,w);
 	}
 
-	float Turb(const Vec3& p, int depth = 10) const
+	float Turb(const Vec3& p, int depth = 7) const
 	{
 		float accum = 0;
 		Vec3 temp_p = p;

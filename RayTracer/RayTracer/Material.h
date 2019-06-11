@@ -9,6 +9,10 @@ class Material
 public:
 	
 	virtual bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const = 0;
+	virtual Vec3 Emmit(float u,float v,const Vec3& p) const
+	{
+		return Vec3(0, 0, 0);
+	}
 };
 
 class Lambert :public Material
@@ -50,4 +54,22 @@ private:
 	{
 		return v - 2 * dot(v, n)*n;
 	}
+};
+
+class DiffuseLight:public Material
+{
+public:
+	DiffuseLight() = default;
+	DiffuseLight(Texture* t):emit(t){}
+
+	bool Scatter(const Ray& rayIn, const HitInfo& hitInfo, Vec3& attenuation, Ray& scattered) const override
+	{
+		return false;
+	};
+
+	Vec3 Emmit(float u,float v,const Vec3& p) const override
+	{
+		return emit->GetColor(u, v, p);
+	}
+	Texture* emit;
 };

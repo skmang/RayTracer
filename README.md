@@ -5,7 +5,7 @@
 ### Material
 	1.Lambert
 	2.Metal
-
+	3.Emit
 ### Texture
 	1.Checker Texture
 	2.Perlin Noise

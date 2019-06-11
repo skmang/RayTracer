@@ -68,5 +68,8 @@
     <ClInclude Include="Perlin.h">
       <Filter>头文件\Texture</Filter>
     </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

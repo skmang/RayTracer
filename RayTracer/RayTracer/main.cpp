@@ -17,74 +17,33 @@
 #include "Material.h"
 #include "ConstDef.h"
 #include "BVHNode.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 Vec3 GetColor(const Ray& r, Hitable* world, int depth) {
 	HitInfo rec;
 	if (world->Hit(r, 0.00001, std::numeric_limits<float>::max(), rec)) {
 		Ray scatter;
 		Vec3 attenuation;
+		Vec3 emmited = rec.Material->Emmit(rec.u, rec.v, rec.Point);
 		if (depth < 50 && rec.Material->Scatter(r, rec, attenuation, scatter))
 		{
 			// 颜色衰减 R G B 分量(范围在0到1)，为初始化材质时传入的值，会收敛至0，即为黑色的阴影
-			return attenuation * GetColor(scatter, world, depth + 1);
+			return emmited + attenuation * GetColor(scatter, world, depth + 1);
 		}
 		else
 		{
-			return Vec3(0, 0, 0);
+			return emmited;
 		}
 	}
-	else {
-		Vec3 unit_vec = unit_vector(r.GetDirection());
-		float t = 0.5*(unit_vec.y() + 1.0);
-		return Vec3(1.0, 1.0, 1.0) * (1 - t) + Vec3(0.5, 0.7, 1.0)*t;
-	}
+	else
+		return Vec3(0, 0, 0);
 }
 
 void ShowProgress(float current, float total, string info) {
 	std::cout << info << " " << current / total << "\r";
 }
-
-//Hitable* RandomScene()
-//{
-//	int n = 500;
-//	Hitable** list = new Hitable*[n + 1];
-//	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(Vec3(0.3, 0.3, 0.3)));
-//	int i = 1;
-//	for (int a = -11; a < 11; a++)
-//	{
-//		for (int b = -11; b < 11; b++)
-//		{
-//			float chooseMat = GetCanonical();
-//			Vec3 center(a + 0.9*GetCanonical(), 0.2, b + 0.9*GetCanonical());
-//			if((center-Vec3(4,0.2,0)).length()>0.9)
-//			{
-//				if(chooseMat <0.7)
-//				{
-//					list[i++] = new MoveSphere(
-//						center,
-//						center + Vec3(0, GetCanonical()*0.5, 0),
-//						0.0,
-//						1.0,
-//						0.2,
-//						new Lambert(Vec3(GetCanonical(), GetCanonical(), GetCanonical()))
-//					);
-//				}else
-//				{
-//					list[i++] = new Sphere(center, 0.2, new Metal(
-//						Vec3(0.5f*(1.f+ GetCanonical())
-//							, 0.5f*(1.f + GetCanonical())
-//							, 0.5f*(1.f + GetCanonical())),
-//						0.5*GetCanonical()));
-//				}
-//			}
-//		}
-//	}
-//	list[i++] = new Sphere(Vec3(-4, 1, 0), 1.0, new Metal(Vec3(0.61, 0.71, 0.7),0.3));
-//	list[i++] = new Sphere(Vec3(0,1,0), 1.0, new Lambert(Vec3(0.1,0.71,0.36)));
-//	list[i++] = new Sphere(Vec3(4, 1, 0), 1.0, new Metal(Vec3(0.5, 0.65, 0.87),0.2));
-//
-//	return new HitableList(list, i);
-//}
+/* --------------------------------------------------Scene--------------------------------------------------- */
 Hitable* RandomSceneBVH()
 {
 	std::vector<Hitable*> hitableList;
@@ -143,12 +102,24 @@ Hitable* RandomSceneBVH()
 
 Hitable* TwoPerlinNoiseBalls()
 {
-	Texture *perlin = new NoiseTexture(30);
+	Texture *perlin = new NoiseTexture(4);
 	Hitable** list = new Hitable*[2];
 	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(perlin));
 	list[1] = new Sphere(Vec3(0, 2, 0), 2, new Lambert(perlin));
 	return new HitableList(list, 2);
 }
+
+Hitable* SimpLight()
+{
+	Texture *perlin = new NoiseTexture(4);
+	Hitable** list = new Hitable*[4];
+	list[0] = new Sphere(Vec3(0, -1000, 0), 1000, new Lambert(perlin));
+	list[1] = new Sphere(Vec3(0, 2, 0), 2, new Lambert(perlin));
+	list[2] = new RectangleXY(0, 4, 0, 4, -2, new DiffuseLight(new ConstantTexture(Vec3(4, 4, 4)))); //因为是光照 所以Color值比较高
+	list[3] = new Sphere(Vec3(0, 7, 0), 1, new  DiffuseLight(new ConstantTexture(Vec3(4, 4, 4))));
+	return new HitableList(list, 4);
+}
+/* ---------------------------------------------------------------------------------------------------------- */
 
 struct MultithreadInfo
 {
@@ -210,9 +181,9 @@ int main()
 	std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(3);
 
 	// Image Settings
-	int ns = 20;
-	int nx = 600;
-	int ny = 300;
+	int ns = 100;
+	int nx = 1200;
+	int ny = 600;
 
 	// 记录时间
 	std::clock_t start;
@@ -220,7 +191,8 @@ int main()
 
 	// 初始化场景与相机
 	//Hitable* world = RandomSceneBVH();
-	Hitable* world = TwoPerlinNoiseBalls();
+	//Hitable* world = TwoPerlinNoiseBalls();
+	Hitable* world = SimpLight();
 	Vec3 lookFrom = Vec3(13, 2, 3);
 	Vec3 lookAt = Vec3(0, 0, 0);
 	float focusDist = 10.0f;
@@ -263,7 +235,7 @@ int main()
 			currentCount += progress[i];
 		}
 		float progress = (float)currentCount / (float)totalCount;
-		if (progress - lastProgress > 0.02)
+		if (progress - lastProgress > 0.001)
 		{
 			std::cout << "Current Progress " << progress << "\r";
 			lastProgress = progress;
@@ -278,6 +250,7 @@ int main()
 		}
 		if (canJoin)
 		{
+			std::cout << "All Thread Complete!!!! " << progress << std::endl;
 			break;
 		}
 	}
@@ -289,12 +262,17 @@ int main()
 
 	// --写入到文件
 	std::ofstream os("../Image/Image_" + std::to_string(GetRandomNumber(1, 100000)) + ".ppm");
+	//std::cout << "P3\n" << nx << " " << " " << ny << "\n255\n";
 	os << "P3\n" << nx << " " << " " << ny << "\n255\n";
 	for (int y = ny - 1; y >= 0; y--)
 	{
 		for (int x = 0; x < nx; x++)
 		{
-			os << colorBuffer[x][y][0] << " " << colorBuffer[x][y][1] << " " << colorBuffer[x][y][2] << "\n";
+			int r = colorBuffer[x][y][0];
+			int g = colorBuffer[x][y][1];
+			int b = colorBuffer[x][y][2];
+			os << r << " " << g << " " << b << std::endl;
+		//	std::cout << x + (ny - y - 1) * nx << ": " << colorBuffer[x][y] << endl;
 			ShowProgress(static_cast<float>(x + (ny - y) * nx), static_cast<float>(nx * ny), "写入PPM中...");
 		}
 	}
