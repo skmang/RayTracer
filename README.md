@@ -31,3 +31,5 @@ All images are rendering at 1 sample , so it looks ugly...
 &nbsp; 
 &nbsp; 5.Checker texture with perlin noise_800 x 400, 1 Sample
 ![Checker texture with perlin noise_800 x 400, 1 Sample](https://github.com/skmang/RayTracer/blob/master/RayTracer/Image/RayTracer_PerlinNoise.jpg)
+&nbsp; 6.Emit Material, 1200 x 600 ,60 Sample.
+![Checker texture with perlin noise_800 x 400, 1 Sample](https://github.com/skmang/RayTracer/blob/master/RayTracer/Image/RayTracer_LightMaterial.jpg)
